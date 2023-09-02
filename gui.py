@@ -6,71 +6,15 @@ from myOCR_prototype.takeScrShot import SnippingWidget
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
-class Ui_Mainwindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(932, 667)
-        self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.widget = QtWidgets.QWidget(parent=self.centralwidget)
-        self.widget.setGeometry(QtCore.QRect(310, 50, 311, 26))
-        self.widget.setObjectName("widget")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.widget)
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.pushButton_3 = QtWidgets.QPushButton(parent=self.widget)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.horizontalLayout.addWidget(self.pushButton_3)
-        self.pushButton_2 = QtWidgets.QPushButton(parent=self.widget)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.horizontalLayout.addWidget(self.pushButton_2)
-        self.pushButton = QtWidgets.QPushButton(parent=self.widget)
-        self.pushButton.setObjectName("pushButton")
-        self.horizontalLayout.addWidget(self.pushButton)
-        self.widget1 = QtWidgets.QWidget(parent=self.centralwidget)
-        self.widget1.setGeometry(QtCore.QRect(20, 100, 881, 491))
-        self.widget1.setObjectName("widget1")
-        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.widget1)
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.graphicsView = QtWidgets.QLabel(parent=self.widget1)
-        self.graphicsView.setObjectName("graphicsView")
-        self.horizontalLayout_2.addWidget(self.graphicsView)
-        self.textBrowser = QtWidgets.QTextBrowser(parent=self.widget1)
-        self.textBrowser.setObjectName("textBrowser")
-        self.horizontalLayout_2.addWidget(self.textBrowser)
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 932, 21))
-        self.menubar.setObjectName("menubar")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
-
-        self.graphicsView.setMinimumSize(QSize(800, 800))
-        self.graphicsView.setMaximumSize(QSize(4096, 4096))
-
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.pushButton_3.setText(_translate("MainWindow", "Start"))
-        self.pushButton_2.setText(_translate("MainWindow", "PushButton"))
-        self.pushButton.setText(_translate("MainWindow", "PushButton"))
-
-
-
-
-
+from myOCR_prototype.ui_gui import Ui_MainWindow
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        self.ui = Ui_Mainwindow()
+        self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.ui.splitter.setSizes([1,1])
 
         self.ui.pushButton.clicked.connect(self.button1Clicked)
         self.ui.pushButton_3.clicked.connect(self.button3Clicked)
@@ -79,12 +23,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.snippingWidget.onSnippingCompleted = self.onSnippingCompleted
 
         self._pixmap = None
-
+        self.lay = None
 
     def resizeImage(self, pixmap):
-        lwidth = self.ui.graphicsView.width()
+        lwidth = self.ui.imageLabel.width()
         pwidth = pixmap.width()
-        lheight = self.ui.graphicsView.height()
+        lheight = self.ui.imageLabel.height()
         pheight = pixmap.height()
 
         wratio = pwidth * 1.0 / lwidth
@@ -103,14 +47,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def onSnippingCompleted(self,frame):
         self.setWindowState(QtCore.Qt.WindowState.WindowActive)
+
         if frame is None:
             return
 
         image = QImage(frame, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format.Format_RGB888)
-        image.save("snapshot.png")
+        # image.save("snapshot.png")
         pixmap = QPixmap.fromImage(image)
         self._pixmap = self.resizeImage(pixmap)
-        self.ui.graphicsView.setPixmap(self._pixmap)
+
+        if self.lay is None:
+            self.lay = QtWidgets.QVBoxLayout(self.ui.scrollAreaWidgetContents)
+
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.lay.addWidget(self.ui.imageLabel)
+        # path = "G:/Data Analytics/Resnsol Face Recognition/a.jpg"
+        # pixMap = QtGui.QPixmap(path)
+        self.ui.imageLabel.setPixmap(pixmap)
+        self.ui.scrollArea.setWidgetResizable(True)
+        self.ui.imageLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter)
+
+        # self.ui.graphicsView.setPixmap(self._pixmap)
     def button1Clicked(self):
         dlg = Dialog(self)
         dlg.exec()
