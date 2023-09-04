@@ -7,10 +7,11 @@ from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from package.ui_gui import Ui_MainWindow
-from package.model import pytesseractModel
+from package.pytesseract_model import Model
 from package.function import toPILImage, removeLineBreak
 import time
 import threading
+from package.ui_settingDialog import Ui_Dialog
 
 
 class Worker(QObject):
@@ -24,19 +25,23 @@ class Worker(QObject):
     def run(self):
         # Call your time-consuming function here
         if self.choice == "1":
-            model = pytesseractModel(toPILImage(self.image), choice="1")
+            model = Model(toPILImage(self.image), choice="1")
         else:
-            model = pytesseractModel(toPILImage(self.image), choice="0")
+            model = Model(toPILImage(self.image), choice="0")
         result = model.picToString()
         self.finished.emit(result)
     # self.movie.start()
     # self.ui.graphicsView.setPixmap(self._pixmap)
+
+
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
+        self.thread = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.image = None
+        self.setWindowTitle("myOCR_prototype MainProgram")
 
         self.ui.splitter.setSizes([1, 1])
 
@@ -72,6 +77,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.originalText = ""
         self.isLineBreak = True
         self.ui.pushButton_2.clicked.connect(self.lineBreakButtonClicked)
+        self.ui.actionPreferences.triggered.connect(self.menuClicked)
         # movie.start()
 
         # self.ui.progressBar.setStyleSheet(
@@ -97,15 +103,18 @@ class MainWindow(QtWidgets.QMainWindow):
     #         self.ui.progressBar.setValue(value + 1)
     #     else:
     #         self.ui.progressBar.setValue(0)
+    def menuClicked(self):
+        menuDialog = Dialog()
+        menuDialog.exec()
     def lineBreakButtonClicked(self):
-        if self.isLineBreak == True:
+        if self.isLineBreak:
             self.isLineBreak = False
-            if self.originalText != None:
+            if self.originalText is not None:
                 self.ui.textBrowser.setText(removeLineBreak(self.originalText))
             self.ui.pushButton_2.setText("Line Break: OFF")
         else:
             self.isLineBreak = True
-            if self.originalText != None:
+            if self.originalText is not None:
                 self.ui.textBrowser.setText(self.originalText)
             self.ui.pushButton_2.setText("Line Break: ON")
 
@@ -167,9 +176,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # outText = model.picToString()
         # self.ui.textBrowser.setText(outText)
 
-
-
-
         # result = ["result"]
         # thread = threading.Thread(target=modelStart, args=(self.image, result))
         # thread.start()
@@ -187,10 +193,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.thread.start()
 
         QCoreApplication.processEvents()
+
     def onModelResultReady(self, result):
         self.movie.stop()
         self.originalText = result
-        if self.isLineBreak == True:
+        if self.isLineBreak:
             self.ui.textBrowser.setText(result)
         else:
             self.ui.textBrowser.setText(removeLineBreak(result))
@@ -232,30 +239,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.imageLabel.setPixmap(scaled_pixmap)
         self.ui.spinBox.setValue(value + 100)
 
-# class Ui_Dialog(object):
-#     def setupUi(self, Dialog):
-#         Dialog.setObjectName("Dialog")
-#         Dialog.resize(627, 400)
-#         self.pushButton = QtWidgets.QPushButton(parent=Dialog)
-#         self.pushButton.setGeometry(QtCore.QRect(270, 160, 80, 24))
-#         self.pushButton.setObjectName("pushButton")
-#         self.pushButton.clicked.connect(self.pushButtonClicked)
-#         self.variable = 0
-#         self.retranslateUi(Dialog)
-#         QtCore.QMetaObject.connectSlotsByName(Dialog)
-#
-#     def retranslateUi(self, Dialog):
-#         _translate = QtCore.QCoreApplication.translate
-#         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-#         self.pushButton.setText(_translate("Dialog", "OK"))
-#
-#     def pushButtonClicked(self):
-#         print(self.variable)
-#         self.variable += 1
-#
-#
-# class Dialog(QDialog):
-#     def __init__(self, parent=None):
-#         super().__init__(parent)
-#         self.ui = Ui_Dialog()
-#         self.ui.setupUi(self)
+
+class Dialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+

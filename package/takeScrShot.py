@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 from PIL import ImageGrab
 
-class SnippingWidget(QWidget):
+class SnippingWidget(QtWidgets.QWidget):
     is_snipping = False
 
     def __init__(self, parent=None, app=None):
